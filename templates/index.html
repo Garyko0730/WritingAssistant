@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>写作辅助工具</title>
+    <style>
+                /* ==========================
+           页面全局样式
+           ========================== */
+        body {
+            font-family: 'Roboto', Arial, sans-serif; /* 字体 */
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6; /* 背景色 */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh; /* 最小高度填充整个视口 */
+        }
+
+        /* ==========================
+           容器样式
+           ========================== */
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: white; /* 白色背景 */
+            padding: 20px;
+            border-radius: 8px; /* 圆角边框 */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* 轻微阴影 */
+        }
+
+        /* ==========================
+           标题样式
+           ========================== */
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        /* ==========================
+           API 密钥部分
+           ========================== */
+                .api-key-header {
+            display: flex;
+            justify-content: space-between; /* 标题和按钮分散两侧 */
+            align-items: center; /* 垂直居中 */
+        }
+        .api-key-section {
+            position: relative;
+            padding: 15px 15px; /* 上下内边距增大到 30px，左右保持 15px */
+
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+
+        /* API 密钥输入框与按钮 */
+        .api-key-input-container {
+            display: flex;
+            gap: 10px; /* 元素间距 */
+            margin-bottom: 10px;
+        }
+
+        .api-key-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        /* API 密钥按钮 */
+        .api-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .primary-btn {
+            background: linear-gradient(to right, #007bff, #6a0dad);
+        }
+
+        .secondary-btn {
+            background: linear-gradient(to right, #007bff, #6a0dad);
+        }
+
+        .api-btn:hover {
+            opacity: 0.9; /* 悬停透明度 */
+        }
+
+        /* 保存 API 密钥选项 */
+        .api-key-save {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #555;
+            font-size: 14px;
+        }
+
+       /* 设置流程帮助按钮 */
+             /* ? 按钮样式 */
+        .help-btn {
+            width: 40px;
+            height: 40px;
+            background-color: transparent; /* 去掉背景颜色 */
+            border-radius: 50%; /* 圆形 */
+            font-size: 16px;
+            line-height: 40px; /* 设置与高度一致 */
+            text-align: center; /* 水平居中，作为冗余确保对齐 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .help-btn:hover {
+            transform: scale(1.1); /* 悬停放大 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 添加阴影 */
+        }
+
+
+        /* ==========================
+           弹窗（模态框）样式
+           ========================== */
+        .modal {
+            display: none; /* 默认隐藏 */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        /* 弹窗关闭按钮 */
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #aaa;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        /* 弹窗图片 */
+        .modal-images {
+            display: flex;
+            gap: 20px; /* 增加间距 */
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .api-image {
+            width: 400px; /* 修改图片宽度，变大 */
+            max-width: 100%; /* 确保图片不会超过父容器 */
+            border-radius: 10px; /* 增加圆角 */
+            border: 2px solid #ccc; /* 边框加粗 */
+            transition: transform 0.3s ease, box-shadow 0.3s ease; /* 添加阴影过渡效果 */
+        }
+
+        .api-image:hover {
+            transform: scale(1.1); /* 放大比例调整到 1.1 */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* 添加阴影效果 */
+        }
+
+
+        /* ==========================
+           表单样式
+           ========================== */
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .form-row label {
+            flex: 0 0 150px;
+            color: #555;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .form-row input,
+        .form-row select {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-row input[type="number"] {
+            max-width: 100px; /* 限制输入框宽度 */
+        }
+
+        /* ==========================
+           按钮样式
+           ========================== */
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: linear-gradient(to right, #007bff, #6a0dad);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(to right, #0056b3, #4b0082);
+        }
+
+        /* ==========================
+           文本区域样式
+           ========================== */
+        textarea {
+            width: 97%;
+            height: 50px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #333;
+            resize: none;
+            overflow-y: auto;
+        }
+
+        textarea::placeholder {
+            font-style: italic;
+            color: #999;
+        }
+
+        .word-count {
+            text-align: right;
+            font-size: 12px;
+            color: #666;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+
+        /* ==========================
+           加载提示样式
+           ========================== */
+        #loading {
+            text-align: center;
+            color: #007bff;
+            margin-top: 10px;
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+          /* ==========================
+           对话样式
+           ========================== */
+        /* 气泡样式 */
+        .chat-bubble {
+            max-width: 90%;
+            margin: 10px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .chat-bubble.user {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .chat-bubble.assistant {
+            background-color: #f1f0f0;
+            color: #333;
+            align-self: flex-start;
+        }
+
+        .chat-bubble .bubble-actions {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 10px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .chat-bubble:hover .bubble-actions {
+            display: block;
+        }
+
+        .bubble-actions button {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .bubble-actions button:hover {
+            background-color: #0056b3;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>写作辅助工具</h1>
+        <form id="storyForm">
+
+             <!-- 设置 API 密钥部分 -->
+            <div class="api-key-section">
+                <div class="api-key-header">
+                    <h3>设置 API 密钥</h3>
+                    <!-- ? 按钮放在标题右侧 -->
+                    <button class="help-btn" onclick="openImageModal()">?</button>
+                </div>
+                <div class="api-key-input-container">
+                    <input type="text" id="apiKey" placeholder="请输入您的 API 密钥" class="api-key-input">
+                    <button onclick="setApiKey()" class="api-btn primary-btn">设置密钥</button>
+                    <button onclick="redirectToConsole()" class="api-btn secondary-btn">前往获取 API 密钥</button>
+                </div>
+                <div class="api-key-save">
+                    <input type="checkbox" id="saveApiKey">
+                    <label for="saveApiKey">保存密钥到本地</label>
+                </div>
+            </div>
+
+            <!-- 弹窗（模态框） -->
+            <div id="imageModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal()">&times;</span>
+                    <h3>设置 API 密钥流程</h3>
+                    <div class="modal-images">
+                         <img src="{{ url_for('static', filename='images/step1.png') }}" alt="API 获取指南 1" class="api-image">
+                         <img src="{{ url_for('static', filename='images/step2.png') }}" alt="API 获取指南 2" class="api-image">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label for="template">选择模板：</label>
+                <select id="template" onchange="applyTemplate()">
+                    <option value="">-- 请选择一个模板 --</option>
+                    <option value="template1">奇幻冒险</option>
+                    <option value="template2">科幻探索</option>
+                    <option value="template3">校园生活</option>
+                </select>
+            </div>
+
+
+
+
+            <div class="form-row">
+                <label for="theme">主题：</label>
+                <input type="text" id="theme" name="theme" placeholder="请输入主题..." required>
+            </div>
+
+            <div class="form-row">
+                <label for="characters">角色设定：</label>
+                <input type="text" id="characters" name="characters" placeholder="请输入角色设定..." required>
+            </div>
+
+            <div class="form-row">
+                <label for="setting">设定：</label>
+                <input type="text" id="setting" name="setting" placeholder="请输入故事设定..." required>
+            </div>
+
+            <div class="form-row">
+                <label for="maxWords">字数限制：</label>
+                <input type="number" id="maxWords" name="maxWords" placeholder="字数" min="1">
+            </div>
+
+            <div class="form-row">
+                <label for="type">生成类型：</label>
+                <select id="type" name="type">
+                    <option value="outline">生成大纲</option>
+                    <option value="full">生成完整故事</option>
+                </select>
+            </div>
+
+            <div class="button-row">
+                <button type="button" onclick="generateStory()">生成故事</button>
+            </div>
+        </form>
+
+        <!-- 添加生成中的提示 -->
+        <div id="loading">生成中，请稍候...</div>
+
+        <div class="chat-container" id="chatContainer"></div>
+
+        <textarea id="feedback" placeholder="我是您的智能写作助手，请提供主题、角色性格、设定等，即可生成相应的故事大纲或完整文本。" oninput="updateWordCount(this)"></textarea>
+        <div class="word-count" id="feedbackWordCount">字数：0</div>
+        <div class="button-row">
+            <button type="button" onclick="continueConversation()">发送信息</button>
+        </div>
+    </div>
+
+    <script>
+        let conversationHistory = []; // 保存对话历史
+
+        function appendChatBubble(role, content) {
+            const chatContainer = document.getElementById('chatContainer');
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${role}`; // 设置样式类（用户/助手）
+
+            // 内容显示
+            const textContent = document.createElement('div');
+            textContent.className = 'bubble-content';
+            textContent.textContent = content;
+
+            // 字数统计
+            const wordCount = document.createElement('div');
+            wordCount.className = 'word-count';
+            wordCount.textContent = `(字数: ${content.length})`;
+
+            // 操作按钮
+            const actions = document.createElement('div');
+            actions.className = 'bubble-actions';
+
+            const exportButton = document.createElement('button');
+            exportButton.textContent = '导出文档';
+            exportButton.onclick = () => downloadStory(content);
+
+            const editButton = document.createElement('button');
+            editButton.textContent = '编辑内容';
+            editButton.onclick = () => editChatBubble(bubble, content);
+
+            actions.appendChild(exportButton);
+            actions.appendChild(editButton);
+
+            // 组装气泡
+            bubble.appendChild(textContent);
+            bubble.appendChild(wordCount);
+            bubble.appendChild(actions);
+
+            chatContainer.appendChild(bubble);
+            chatContainer.scrollTop = chatContainer.scrollHeight; // 滚动到最底部
+        }
+         function editChatBubble(bubble, content) {
+            const newContent = prompt("编辑内容：", content);
+              if (newContent !== null) {
+                  bubble.remove(); // 删除原来的气泡
+                  appendChatBubble('user', newContent); // 重新添加用户的气泡
+
+                  // 删除模型的生成气泡
+                  const chatContainer = document.getElementById('chatContainer');
+                  const assistantBubbles = chatContainer.querySelectorAll('.chat-bubble.assistant');
+                  assistantBubbles.forEach(bubble => bubble.remove());
+
+                  // 重新生成故事
+                  regenerateStory(newContent);
+              }
+         }
+         function regenerateStory(userContent) {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            try {
+                fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ theme: userContent }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.story) {
+                        appendChatBubble('assistant', data.story);
+                    } else {
+                        appendChatBubble('assistant', '故事生成失败，请稍后重试！');
+                    }
+                })
+                .catch(error => {
+                    appendChatBubble('assistant', '请求出错，请稍后重试！');
+                    console.error('请求出错：', error);
+                })
+                .finally(() => {
+                    loading.style.display = 'none';
+                });
+            } catch (error) {
+                console.error('请求出错：', error);
+            }
+        }
+
+        function updateWordCount(textarea) {
+            const wordCount = textarea.value.length;
+            document.getElementById('feedbackWordCount').textContent = `字数：${wordCount}`;
+        }
+        function setApiKey() {
+            const apiKey = document.getElementById('apiKey').value;
+            const saveApiKey = document.getElementById('saveApiKey').checked;
+
+            if (!apiKey) {
+                alert("请输入有效的 API 密钥！");
+                return;
+            }
+
+            fetch('/set_api_key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ api_key: apiKey, save: saveApiKey }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('设置 API 密钥失败:', error);
+            });
+        }
+
+        function openImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            modal.style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('imageModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function redirectToConsole() {
+            window.open("https://console.volcengine.com/ark/region:ark+cn-beijing/endpoint?config=%7B%7D", "_blank");
+            openImageModal(); // 显示弹窗
+        }
+
+        const templates = {
+            template1: {
+                theme: "寻找失落的宝藏",
+                characters: "勇敢的探险家和他的伙伴",
+                setting: "一个充满危险和谜题的远古遗迹",
+            },
+            template2: {
+                theme: "探索未知的宇宙",
+                characters: "一名经验丰富的飞船指挥官",
+                setting: "一艘先进的星际飞船和神秘的外星行星",
+            },
+            template3: {
+                theme: "高中篮球比赛的胜利",
+                characters: "一名热血高中生和他的队友",
+                setting: "一个竞争激烈的高中篮球联赛",
+            },
+        };
+
+        function applyTemplate() {
+            const templateSelect = document.getElementById('template');
+            const selectedTemplate = templateSelect.value;
+
+            if (templates[selectedTemplate]) {
+                const { theme, characters, setting } = templates[selectedTemplate];
+                document.getElementById('theme').value = theme;
+                document.getElementById('characters').value = characters;
+                document.getElementById('setting').value = setting;
+            }
+        }
+
+        async function generateStory() {
+            const theme = document.getElementById('theme').value;
+            const characters = document.getElementById('characters').value;
+            const setting = document.getElementById('setting').value;
+            const maxWords = document.getElementById('maxWords').value;
+            const type = document.getElementById('type').value;
+            const loading = document.getElementById('loading');
+
+            // 显示加载状态
+            loading.style.display = 'block';
+
+            try {
+                appendChatBubble('user', `主题: ${theme}, 角色: ${characters}, 设定: ${setting}, 类型: ${type}, 字数限制: ${maxWords}`);
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ theme, characters, setting, maxWords, type }),
+                });
+
+                const data = await response.json();
+                if (data.story) {
+                    appendChatBubble('assistant', data.story);
+                } else {
+                    appendChatBubble('assistant', '故事生成失败，请稍后重试！');
+                }
+            } catch (error) {
+                appendChatBubble('assistant', '请求出错，请稍后重试！');
+                console.error('请求出错：', error);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        async function continueConversation() {
+            const feedback = document.getElementById('feedback').value;
+            const loading = document.getElementById('loading');
+
+            if (!feedback) {
+                alert('请输入反馈内容！');
+                return;
+            }
+
+            appendChatBubble('user', feedback);
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/continue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversationHistory: [{ role: 'user', content: feedback }] }),
+                });
+
+                const data = await response.json();
+                if (data.story) {
+                    appendChatBubble('assistant', data.story);
+                } else {
+                    appendChatBubble('assistant', '继续对话失败，请稍后重试！');
+                }
+            } catch (error) {
+                appendChatBubble('assistant', '请求出错，请稍后重试！');
+                console.error('请求出错：', error);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function downloadStory(content) {
+            const fileName = prompt("请输入保存的文件名（例如 story.txt）：", "story.txt");
+
+            if (!fileName) {
+                alert("文件名不能为空！");
+                return;
+            }
+
+            const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+        }
+    </script>
+</body>
+</html>
