@@ -49,19 +49,61 @@ DOUBAO_API_KEY = load_api_key()
 @app.route('/')
 def home():
     return render_template('index.html')  # 渲染前端页面
+def load_config():
+    """从配置文件加载配置"""
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+                config = json.load(file)
+                return config
+    except Exception as e:
+        print(f"加载配置文件时出错: {e}")
+    return {}
+
+def save_config(api_key=None, model_id=None):
+    """保存配置到配置文件"""
+    try:
+        config = load_config()  # 读取现有配置
+        if api_key:
+            config["api_key"] = api_key
+        if model_id:
+            config["model_id"] = model_id
+        with open(CONFIG_FILE, "w", encoding="utf-8") as file:
+            json.dump(config, file)
+    except Exception as e:
+        print(f"保存配置文件时出错: {e}")
+
 
 @app.route('/set_api_key', methods=['POST'])
 def set_api_key():
-    """设置 API 密钥"""
+    """设置 API 密钥和模型 ID"""
     data = request.json
     api_key = data.get('api_key', '')
-    save_option = data.get('save', False)  # 是否保存密钥
+    model_id = data.get('model_id', '')
+    save_option = data.get('save', False)  # 是否保存到本地
 
     if save_option:
-        save_api_key(api_key)
-    global DOUBAO_API_KEY
+        save_config(api_key=api_key, model_id=model_id)  # 保存到配置文件
+
+    # 更新全局变量
+    global DOUBAO_API_KEY, DEFAULT_MODEL_ID
     DOUBAO_API_KEY = api_key
-    return jsonify({"message": "API 密钥已设置成功"})
+    DEFAULT_MODEL_ID = model_id
+
+    return jsonify({"message": "API 密钥和模型 ID 已设置成功"})
+
+@app.route('/set_model_id', methods=['POST'])
+def set_model_id():
+    """设置模型 ID"""
+    data = request.json
+    model_id = data.get('model_id', '')
+    save_option = data.get('save', False)  # 是否保存模型 ID
+
+    if save_option:
+        save_config(model_id=model_id)
+    global DEFAULT_MODEL_ID
+    DEFAULT_MODEL_ID = model_id
+    return jsonify({"message": "模型 ID 已设置成功"})
 
 @app.route('/get_api_key', methods=['GET'])
 def get_api_key():
@@ -78,11 +120,15 @@ def generate_story():
     characters = data.get('characters', '')
     setting = data.get('setting', '')
     story_type = data.get('type', '')
-    max_words = data.get('maxWords', '')  # 获取字数限制参数
+    max_words = data.get('maxWords', '')
+    model = data.get('model', '')  # 接受前端传递的模型 ID
+
+    if not model:
+        return jsonify({"error": "模型 ID 未设置，请输入模型 ID"}), 400
 
     # 构建请求载荷
     payload = {
-        "model": "ep-20241212210011-tlt27",  # 替换为你的模型 ID
+        "model": model,  # 使用用户输入的模型 ID
         "messages": [
             {"role": "system", "content": "你是豆包，是由字节跳动开发的 AI 人工智能助手"},
             {

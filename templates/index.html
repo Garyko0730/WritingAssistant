@@ -85,6 +85,45 @@
             cursor: pointer;
             transition: background 0.3s ease;
         }
+                .form-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .form-row label {
+            width: 100px; /* 固定标签宽度 */
+            color: #555;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .api-key-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .api-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .primary-btn {
+            background: linear-gradient(to right, #007bff, #6a0dad);
+        }
+
+        .secondary-btn {
+            background: linear-gradient(to right, #6c757d, #6a0dad);
+        }
 
         .primary-btn {
             background: linear-gradient(to right, #007bff, #6a0dad);
@@ -366,23 +405,31 @@
         <h1>写作辅助工具</h1>
         <form id="storyForm">
 
-             <!-- 设置 API 密钥部分 -->
+            <!-- 设置 API 密钥部分 -->
             <div class="api-key-section">
                 <div class="api-key-header">
-                    <h3>设置 API 密钥</h3>
+                    <h3>设置 API 密钥及模型接入点</h3>
                     <!-- ? 按钮放在标题右侧 -->
                     <button class="help-btn" onclick="openImageModal()">?</button>
                 </div>
-                <div class="api-key-input-container">
+                <!-- 模型 ID 行 -->
+                <div class="api-key-input-container form-row">
+                    <label for="model">模型 ID：</label>
+                    <input type="text" id="model" name="model" placeholder="请输入模型 ID..." class="api-key-input" required>
+                </div>
+                <!-- API 密钥行 -->
+                <div class="api-key-input-container form-row">
+                    <label for="apiKey">API 密钥：</label>
                     <input type="text" id="apiKey" placeholder="请输入您的 API 密钥" class="api-key-input">
                     <button onclick="setApiKey()" class="api-btn primary-btn">设置密钥</button>
                     <button onclick="redirectToConsole()" class="api-btn secondary-btn">前往获取 API 密钥</button>
                 </div>
                 <div class="api-key-save">
                     <input type="checkbox" id="saveApiKey">
-                    <label for="saveApiKey">保存密钥到本地</label>
+                    <label for="saveApiKey">保存配置信息到本地</label>
                 </div>
             </div>
+
 
             <!-- 弹窗（模态框） -->
             <div id="imageModal" class="modal">
@@ -546,26 +593,33 @@
         }
         function setApiKey() {
             const apiKey = document.getElementById('apiKey').value;
-            const saveApiKey = document.getElementById('saveApiKey').checked;
+            const modelId = document.getElementById('model').value;
+            const saveOption = document.getElementById('saveApiKey').checked;
 
-            if (!apiKey) {
-                alert("请输入有效的 API 密钥！");
+            if (!apiKey || !modelId) {
+                alert("请输入有效的 API 密钥和模型 ID！");
                 return;
             }
 
             fetch('/set_api_key', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ api_key: apiKey, save: saveApiKey }),
+                body: JSON.stringify({
+                    api_key: apiKey,
+                    model_id: modelId,
+                    save: saveOption
+                }),
             })
             .then(response => response.json())
             .then(data => {
                 alert(data.message);
             })
             .catch(error => {
-                console.error('设置 API 密钥失败:', error);
+                console.error('设置失败:', error);
+                alert('设置失败，请检查网络连接！');
             });
         }
+
 
         function openImageModal() {
             const modal = document.getElementById('imageModal');
@@ -626,17 +680,17 @@
             const setting = document.getElementById('setting').value;
             const maxWords = document.getElementById('maxWords').value;
             const type = document.getElementById('type').value;
-            const loading = document.getElementById('loading');
+            const model = document.getElementById('model').value; // 获取模型 ID
 
-            // 显示加载状态
+            const loading = document.getElementById('loading');
             loading.style.display = 'block';
 
             try {
-                appendChatBubble('user', `主题: ${theme}, 角色: ${characters}, 设定: ${setting}, 类型: ${type}, 字数限制: ${maxWords}`);
+                appendChatBubble('user', `主题: ${theme}, 角色: ${characters}, 设定: ${setting}, 类型: ${type}, 字数限制: ${maxWords}, 模型 ID: ${model}`);
                 const response = await fetch('/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ theme, characters, setting, maxWords, type }),
+                    body: JSON.stringify({ theme, characters, setting, maxWords, type, model }), // 传递模型 ID
                 });
 
                 const data = await response.json();
@@ -652,6 +706,7 @@
                 loading.style.display = 'none';
             }
         }
+
 
         async function continueConversation() {
             const feedback = document.getElementById('feedback').value;
