@@ -151,6 +151,35 @@ def generate_story():
     except Exception as e:
         return jsonify({"error": "请求失败，请检查网络连接或 API 密钥", "details": str(e)}), 500
 
+@app.route('/continue', methods=['POST'])
+def continue_conversation():
+    if not DOUBAO_API_KEY:
+        return jsonify({"error": "API 密钥未设置，请先输入您的 API 密钥"}), 400
+
+    data = request.json
+    conversation_history = data.get('conversationHistory', [])
+
+    if not conversation_history:
+        return jsonify({"error": "对话历史为空，请输入内容后重试"}), 400
+
+    # 构建请求载荷
+    payload = {
+        "model": DEFAULT_MODEL_ID,  # 从配置加载的模型 ID
+        "messages": conversation_history
+    }
+    headers = {"Authorization": f"Bearer {DOUBAO_API_KEY}"}
+
+    # 调用豆包 API
+    try:
+        response = requests.post(DOUBAO_API_URL, json=payload, headers=headers)
+        if response.status_code == 200:
+            story_content = response.json().get('choices', [{}])[0].get('message', {}).get('content', '生成失败')
+            return jsonify({"story": story_content})
+        else:
+            return jsonify({"error": "调用豆包 API 失败", "details": response.text}), 500
+    except Exception as e:
+        return jsonify({"error": "请求失败，请检查网络连接或 API 密钥", "details": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
